@@ -19,6 +19,7 @@ dependencies = [
     "aiohttp>=3.9.0",
     "slack-sdk>=3.43.0",
     "sqlalchemy>=2.0.51",
+    "async-lru>=2.3.0",
 ]
 
 [tool.black]

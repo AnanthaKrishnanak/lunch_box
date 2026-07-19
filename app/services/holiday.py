@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from starlette import status
 
+from app.core.cache import get_holidays
 from app.models.holiday import Holiday
 from app.repositories.holiday import HolidayRepository
 from app.schemas.holiday import HolidayBase
@@ -24,8 +25,11 @@ class HolidayService:
 
     async def create(self, payload: HolidayBase) -> Holiday:
         holiday = Holiday(**payload.model_dump())
-        return await self.repository.create(holiday)
+        await self.repository.create(holiday)
+        get_holidays.cache_clear()
+        return holiday
 
     async def delete(self, holiday_id: int) -> None:
         holiday = await self.get_by_id(holiday_id)
-        return await self.repository.delete(holiday)
+        await self.repository.delete(holiday)
+        get_holidays.cache_clear()

@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     SLACK_SIGNING_SECRET: str
     SLACK_BOT_TOKEN: str
+    LRU_CACHE_SIZE: int = 100
+    LRU_CACHE_TTL: int = 60 * 60 * 24  # 1 day
 
 
 settings = Settings()
