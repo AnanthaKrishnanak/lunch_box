@@ -1,10 +1,13 @@
+import re
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.settings import settings
 
-engine = create_async_engine(settings.DATABASE_URL)
+engine = create_async_engine(
+    re.sub(r"^postgresql:", "postgresql+psycopg:", settings.DATABASE_URL)
+)
 SessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
