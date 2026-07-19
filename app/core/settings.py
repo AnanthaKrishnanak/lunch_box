@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     APP_NAME: str = "Lunch Box"
     API_VERSION: str = "/api/v1"
     DATABASE_URL: str
+    SLACK_SIGNING_SECRET: str
+    SLACK_BOT_TOKEN: str
 
 
 settings = Settings()
