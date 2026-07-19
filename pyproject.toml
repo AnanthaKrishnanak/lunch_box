@@ -16,6 +16,8 @@ dependencies = [
     "pydantic-settings>=2.14.2",
     "python-dotenv>=1.2.2",
     "ruff>=0.15.22",
+    "aiohttp>=3.9.0",
+    "slack-sdk>=3.43.0",
     "sqlalchemy>=2.0.51",
 ]
 
