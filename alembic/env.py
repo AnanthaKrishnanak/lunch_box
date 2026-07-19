@@ -1,9 +1,11 @@
 import asyncio
+import re
 from logging.config import fileConfig
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
 from app.core.mixins import Base
@@ -12,7 +14,20 @@ from app.core.settings import settings
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+
+# Rewrite scheme to asyncpg. asyncpg does not accept `sslmode` or
+# `channel_binding` URL params, so strip them and handle SSL via connect_args.
+_raw_url = re.sub(
+    r"^postgresql(\+\w+)?://", "postgresql+asyncpg://", settings.DATABASE_URL
+)
+_parsed = urlparse(_raw_url)
+_qs = parse_qs(_parsed.query, keep_blank_values=True)
+_sslmode = _qs.pop("sslmode", ["disable"])[0]
+_qs.pop("channel_binding", None)
+_needs_ssl = _sslmode in ("require", "verify-ca", "verify-full")
+async_db_url = urlunparse(_parsed._replace(query=urlencode(_qs, doseq=True)))
+
+config.set_main_option("sqlalchemy.url", async_db_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -67,11 +82,10 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
-
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    connectable = create_async_engine(
+        async_db_url,
         poolclass=pool.NullPool,
+        connect_args={"ssl": True} if _needs_ssl else {},
     )
 
     async with connectable.connect() as connection:
