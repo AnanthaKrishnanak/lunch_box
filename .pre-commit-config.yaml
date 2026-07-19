@@ -14,4 +14,12 @@ repos:
     rev: v1.17.0
     hooks:
       - id: mypy
-        additional_dependencies: [fastapi, pydantic-settings, sqlalchemy, alembic]
+        additional_dependencies:
+          - fastapi[standard]
+          - pydantic-settings
+          - sqlalchemy[mypy]
+          - alembic
+          - async-lru>=2.3.0
+          - slack-sdk
+          - aiohttp
+          - python-dotenv

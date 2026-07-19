@@ -1,3 +1,4 @@
+from app.core.cache import get_system_settings
 from app.models.system_settings import SystemSettings
 from app.repositories.system_settings import SystemSettingsRepository
 from app.schemas.system_settings import SystemSettingsBase
@@ -12,7 +13,9 @@ class SystemSettingsService:
 
     async def create(self, payload: SystemSettingsBase) -> SystemSettings:
         system_settings = SystemSettings(**payload.model_dump())
-        return await self.repository.create(system_settings)
+        created_system_settings = await self.repository.create(system_settings)
+        get_system_settings.cache_clear()
+        return created_system_settings
 
     async def update(self, payload: SystemSettingsBase) -> SystemSettings:
         system_settings = await self.repository.get()
@@ -25,10 +28,13 @@ class SystemSettingsService:
         for field, value in update_data.items():
             setattr(system_settings, field, value)
 
-        return await self.repository.update(system_settings)
+        updated_system_settings = await self.repository.update(system_settings)
+        get_system_settings.cache_clear()
+        return updated_system_settings
 
     async def delete(self) -> None:
         system_settings = await self.repository.get()
         if system_settings is None:
             return None
         await self.repository.delete(system_settings)
+        get_system_settings.cache_clear()
