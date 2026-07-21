@@ -14,5 +14,8 @@ class Settings(BaseSettings):
     LRU_CACHE_SIZE: int = 100
     LRU_CACHE_TTL: int = 60 * 60 * 24  # 1 day
 
+    # Set to True in .env to bypass Slack auth for local /docs testing
+    DEV_MODE: bool = False
+
 
 settings = Settings()

@@ -7,9 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_session
 from app.core.slack import get_slack_client
 from app.repositories.holiday import HolidayRepository
+from app.repositories.reservation import ReservationRepository
 from app.repositories.system_settings import SystemSettingsRepository
 from app.repositories.user import UserRepository
 from app.services.holiday import HolidayService
+from app.services.reservation import ReservationService
 from app.services.system_settings import SystemSettingsService
 from app.services.user import UserService
 
@@ -92,4 +94,27 @@ def get_holiday_service(
 HolidayServiceDeps = Annotated[
     HolidayService,
     Depends(get_holiday_service),
+]
+
+
+# Reservation
+def get_reservation_repository(session: Session) -> ReservationRepository:
+    return ReservationRepository(session)
+
+
+ReservationRepositoryDeps = Annotated[
+    ReservationRepository,
+    Depends(get_reservation_repository),
+]
+
+
+def get_reservation_service(
+    reservation_repository: ReservationRepositoryDeps,
+) -> ReservationService:
+    return ReservationService(reservation_repository)
+
+
+ReservationServiceDeps = Annotated[
+    ReservationService,
+    Depends(get_reservation_service),
 ]
