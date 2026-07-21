@@ -1,4 +1,3 @@
-from app.core.cache import get_system_settings
 from app.models.system_settings import SystemSettings
 from app.repositories.system_settings import SystemSettingsRepository
 from app.schemas.system_settings import SystemSettingsBase
@@ -12,12 +11,20 @@ class SystemSettingsService:
         return await self.repository.get()
 
     async def create(self, payload: SystemSettingsBase) -> SystemSettings:
+        from app.core.cache import (
+            get_system_settings,
+        )  # deferred to avoid circular import
+
         system_settings = SystemSettings(**payload.model_dump())
         created_system_settings = await self.repository.create(system_settings)
         get_system_settings.cache_clear()
         return created_system_settings
 
     async def update(self, payload: SystemSettingsBase) -> SystemSettings:
+        from app.core.cache import (
+            get_system_settings,
+        )  # deferred to avoid circular import
+
         system_settings = await self.repository.get()
 
         if system_settings is None:
@@ -33,6 +40,10 @@ class SystemSettingsService:
         return updated_system_settings
 
     async def delete(self) -> None:
+        from app.core.cache import (
+            get_system_settings,
+        )  # deferred to avoid circular import
+
         system_settings = await self.repository.get()
         if system_settings is None:
             return None

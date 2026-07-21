@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.mixins import Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.reservation import Reservation
 
 
 class User(Base, TimestampMixin):
@@ -29,4 +34,9 @@ class User(Base, TimestampMixin):
         String(255),
         unique=True,
         nullable=False,
+    )
+
+    reservations: Mapped[list["Reservation"]] = relationship(
+        "Reservation",
+        back_populates="user",
     )
