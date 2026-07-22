@@ -66,15 +66,13 @@ class ReservationService:
         )
 
         if is_after_cutoff:
-            cancelled_reservation = (
-                await self.reservation_repository.get_cancelled_reservation(
+            claimed_cancelled_slot = (
+                await self.reservation_repository.claim_cancelled_reservation(
                     reservation_date=reservation_date,
                 )
             )
 
-            if cancelled_reservation:
-                await self.reservation_repository.delete(cancelled_reservation)
-            else:
+            if not claimed_cancelled_slot:
                 status = ReservationStatus.PENDING
 
         reservation = Reservation(
@@ -147,15 +145,13 @@ class ReservationService:
         )
 
         if today_reservation and now().time() >= system_settings.cutoff_time:
-            cancelled_reservation = (
-                await self.reservation_repository.get_cancelled_reservation(
-                    reservation_date=reservations_to_add[0].reservation_date,
+            claimed_cancelled_slot = (
+                await self.reservation_repository.claim_cancelled_reservation(
+                    reservation_date=today_reservation.reservation_date,
                 )
             )
 
-            if cancelled_reservation:
-                await self.reservation_repository.delete(cancelled_reservation)
-            else:
+            if not claimed_cancelled_slot:
                 today_reservation.status = ReservationStatus.PENDING
 
         await self.reservation_repository.bulk_create(reservations_to_add)
