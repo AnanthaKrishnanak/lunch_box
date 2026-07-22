@@ -11,12 +11,18 @@ class ReservationRepository:
         self.session = session
 
     async def get_reservation_by_date(
-        self, reservation_date: date, slack_user_id: str
+        self,
+        reservation_date: date,
+        slack_user_id: str,
+        *,
+        for_update: bool = False,
     ) -> Reservation | None:
         stmt = select(Reservation).where(
             Reservation.reservation_date == reservation_date,
             Reservation.slack_user_id == slack_user_id,
         )
+        if for_update:
+            stmt = stmt.with_for_update()
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
@@ -38,7 +44,9 @@ class ReservationRepository:
                 Reservation.reservation_date == reservation_date,
                 Reservation.status == ReservationStatus.PENDING,
             )
-            .order_by(Reservation.created_at)
+            .order_by(Reservation.created_at, Reservation.id)
+            .limit(1)
+            .with_for_update(skip_locked=True)
         )
         result = await self.session.execute(stmt)
         return result.scalars().first()
@@ -58,6 +66,7 @@ class ReservationRepository:
                 Reservation.created_at,
                 Reservation.id,
             )
+            .limit(1)
             .with_for_update(skip_locked=True)
         )
         result = await self.session.execute(stmt)
@@ -65,7 +74,6 @@ class ReservationRepository:
         if cancelled_reservation is None:
             return False
         await self.delete(cancelled_reservation)
-        await self.session.flush()
         return True
 
     async def get_reservations_by_dates(

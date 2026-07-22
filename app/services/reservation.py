@@ -16,10 +16,16 @@ class ReservationService:
         self.reservation_repository = reservation_repository
 
     async def get_reservation_by_date(
-        self, reservation_date: date, slack_user_id: str
+        self,
+        reservation_date: date,
+        slack_user_id: str,
+        *,
+        for_update: bool = False,
     ) -> Reservation | None:
         return await self.reservation_repository.get_reservation_by_date(
-            reservation_date, slack_user_id
+            reservation_date,
+            slack_user_id,
+            for_update=for_update,
         )
 
     async def get_all_reservations(self) -> list[Reservation]:
@@ -182,7 +188,9 @@ class ReservationService:
         )
 
         reservation = await self.get_reservation_by_date(
-            reservation_date, slack_user_id
+            reservation_date,
+            slack_user_id,
+            for_update=True,
         )
 
         if reservation is None:
@@ -251,20 +259,25 @@ class ReservationService:
 
         reservation_to_keep = None
         if todays_reservation and now().time() >= system_settings.cutoff_time:
-            is_promoted = await self.promote_pending_reservations(
-                reservation_date=todays_reservation.reservation_date,
+            todays_reservation = await self.get_reservation_by_date(
+                todays_reservation.reservation_date,
+                slack_user_id,
+                for_update=True,
             )
+            if todays_reservation is not None:
+                is_promoted = await self.promote_pending_reservations(
+                    reservation_date=todays_reservation.reservation_date,
+                )
 
-            if not is_promoted:
-                todays_reservation.status = ReservationStatus.CANCELLED
-                await self.reservation_repository.update(todays_reservation)
-            else:
-                reservation_to_keep = todays_reservation
+                if not is_promoted:
+                    todays_reservation.status = ReservationStatus.CANCELLED
+                    await self.reservation_repository.update(todays_reservation)
+                else:
+                    reservation_to_keep = todays_reservation
 
+        keep_id = reservation_to_keep.id if reservation_to_keep else None
         reservation_ids_to_cancel = [
-            reservation.id
-            for reservation in reservations
-            if reservation != reservation_to_keep
+            reservation.id for reservation in reservations if reservation.id != keep_id
         ]
 
         await self.reservation_repository.bulk_delete(reservation_ids_to_cancel)
