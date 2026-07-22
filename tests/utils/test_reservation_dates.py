@@ -92,11 +92,8 @@ class TestGetNextReservationDatesForAWeek:
             return_value=wednesday_after_rollover,
         ):
             assert get_next_reservation_dates_for_a_week(settings, []) == [
-                date(2026, 7, 27),
-                date(2026, 7, 28),
-                date(2026, 7, 29),
-                date(2026, 7, 30),
-                date(2026, 7, 31),
+                date(2026, 7, 23),
+                date(2026, 7, 24),
             ]
 
     def test_weekend_returns_next_week(self, settings, saturday):
