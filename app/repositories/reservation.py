@@ -43,9 +43,11 @@ class ReservationRepository:
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
-    async def get_cancelled_reservation(
-        self, reservation_date: date
-    ) -> Reservation | None:
+    async def claim_cancelled_reservation(self, reservation_date: date) -> bool:
+        """
+        Claim a cancelled reservation when a new pending reservation is created.
+        Returns True if a cancelled reservation is claimed, False otherwise.
+        """
         stmt = (
             select(Reservation)
             .where(
@@ -56,9 +58,15 @@ class ReservationRepository:
                 Reservation.created_at,
                 Reservation.id,
             )
+            .with_for_update(skip_locked=True)
         )
         result = await self.session.execute(stmt)
-        return result.scalars().first()
+        cancelled_reservation = result.scalars().first()
+        if cancelled_reservation is None:
+            return False
+        await self.delete(cancelled_reservation)
+        await self.session.flush()
+        return True
 
     async def get_reservations_by_dates(
         self, reservation_dates: list[date], slack_user_id: str
