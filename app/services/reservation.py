@@ -1,10 +1,13 @@
 from datetime import date
 
+from fastapi import BackgroundTasks
+
 from app.core.exceptions import NotFoundError
 from app.core.time import now, today
 from app.models.reservation import Reservation, ReservationStatus
 from app.repositories.reservation import ReservationRepository
 from app.schemas.reservation import ReservationResponse
+from app.tasks.notify import notify
 from app.utils.reservation import (
     get_next_reservation_date,
     get_next_reservation_dates_for_a_week,
@@ -12,8 +15,13 @@ from app.utils.reservation import (
 
 
 class ReservationService:
-    def __init__(self, reservation_repository: ReservationRepository):
+    def __init__(
+        self,
+        reservation_repository: ReservationRepository,
+        background_tasks: BackgroundTasks,
+    ):
         self.reservation_repository = reservation_repository
+        self.background_tasks = background_tasks
 
     async def get_reservation_by_date(
         self,
@@ -301,5 +309,10 @@ class ReservationService:
 
         first_pending_reservation.status = ReservationStatus.CONFIRMED
         await self.reservation_repository.update(first_pending_reservation)
+        self.background_tasks.add_task(
+            notify,
+            "Your reservation is confirmed for today's lunch",
+            first_pending_reservation.slack_user_id,
+        )
 
         return True

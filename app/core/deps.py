@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import BackgroundTasks, Depends
 from slack_sdk.web.async_client import AsyncWebClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -110,8 +110,9 @@ ReservationRepositoryDeps = Annotated[
 
 def get_reservation_service(
     reservation_repository: ReservationRepositoryDeps,
+    background_tasks: BackgroundTasks,
 ) -> ReservationService:
-    return ReservationService(reservation_repository)
+    return ReservationService(reservation_repository, background_tasks)
 
 
 ReservationServiceDeps = Annotated[
