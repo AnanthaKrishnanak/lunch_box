@@ -1,3 +1,5 @@
+from sqlalchemy.exc import IntegrityError
+
 from app.models.user import User
 from app.repositories.user import UserRepository
 from app.schemas.user import UserCreate
@@ -14,4 +16,13 @@ class UserService:
         existing_user = await self.get_by_slack_user_id(user.slack_user_id)
         if existing_user:
             return existing_user
-        return await self.user_repository.create(User(**user.model_dump()))
+
+        try:
+            # Savepoint keeps the outer request session usable if insert races.
+            async with self.user_repository.session.begin_nested():
+                return await self.user_repository.create(User(**user.model_dump()))
+        except IntegrityError:
+            existing_user = await self.get_by_slack_user_id(user.slack_user_id)
+            if existing_user:
+                return existing_user
+            raise
