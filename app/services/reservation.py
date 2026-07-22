@@ -41,7 +41,7 @@ class ReservationService:
         system_settings = await get_system_settings()
 
         if system_settings is None:
-            raise NotFoundError("System settings not found")
+            raise NotFoundError("SystemSettings", "current")
 
         reservation_date = get_next_reservation_date(
             system_settings,
@@ -106,7 +106,7 @@ class ReservationService:
 
         system_settings = await get_system_settings()
         if system_settings is None:
-            raise NotFoundError("System settings not found")
+            raise NotFoundError("SystemSettings", "current")
 
         holidays = await get_holidays()
         reservation_dates = get_next_reservation_dates_for_a_week(
@@ -183,7 +183,7 @@ class ReservationService:
         current_time = now().time()
 
         if system_settings is None:
-            raise NotFoundError("System settings not found")
+            raise NotFoundError("SystemSettings", "current")
 
         reservation_date = get_next_reservation_date(
             system_settings,
@@ -233,7 +233,7 @@ class ReservationService:
 
         system_settings = await get_system_settings()
         if system_settings is None:
-            raise NotFoundError("System settings not found")
+            raise NotFoundError("SystemSettings", "current")
 
         holidays = await get_holidays()
         reservation_dates = get_next_reservation_dates_for_a_week(

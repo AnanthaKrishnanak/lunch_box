@@ -14,6 +14,7 @@ repos:
     rev: v1.17.0
     hooks:
       - id: mypy
+        files: ^app/
         additional_dependencies:
           - fastapi[standard]
           - pydantic-settings
@@ -23,3 +24,13 @@ repos:
           - slack-sdk
           - aiohttp
           - python-dotenv
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: uv run pytest
+        language: system
+        types: [python]
+        pass_filenames: false
+        files: ^(app|tests)/
