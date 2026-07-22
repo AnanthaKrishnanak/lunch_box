@@ -1,7 +1,14 @@
+import os
 from datetime import date, datetime, time
 from zoneinfo import ZoneInfo
 
 import pytest
+
+# Required by app.core.settings when tests import app.core.cache (via patches).
+# Local runs may already have these from .env; CI does not.
+os.environ.setdefault("DATABASE_URL", "postgresql://test:test@localhost/test")
+os.environ.setdefault("SLACK_SIGNING_SECRET", "test-signing-secret")
+os.environ.setdefault("SLACK_BOT_TOKEN", "xoxb-test-token")
 
 from tests.factories import make_holiday, make_system_settings
 
