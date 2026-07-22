@@ -120,6 +120,9 @@ class ReservationService:
                 slack_user_id=slack_user_id,
             )
         )
+        existing_dates = {
+            reservation.reservation_date for reservation in existing_reservations
+        }
 
         reservations_to_add = [
             Reservation(
@@ -128,7 +131,7 @@ class ReservationService:
                 status=ReservationStatus.CONFIRMED,
             )
             for reservation_date in reservation_dates
-            if reservation_date not in existing_reservations
+            if reservation_date not in existing_dates
         ]
 
         if not reservations_to_add and existing_reservations:

@@ -9,6 +9,9 @@ from app.repositories.system_settings import SystemSettingsRepository
 from app.services.holiday import HolidayService
 from app.services.system_settings import SystemSettingsService
 
+# Read-through cache only. Mutating settings/holidays must call the matching
+# invalidate_* helper so reservation flows never use stale cutoff/holiday data
+# as if it were authoritative after a write.
 cache = alru_cache(maxsize=settings.LRU_CACHE_SIZE, ttl=settings.LRU_CACHE_TTL)
 
 
@@ -29,3 +32,11 @@ async def get_holidays() -> list[Holiday]:
         repository = HolidayRepository(session)
         service = HolidayService(repository)
         return await service.get_all()
+
+
+def invalidate_system_settings_cache() -> None:
+    get_system_settings.cache_clear()
+
+
+def invalidate_holidays_cache() -> None:
+    get_holidays.cache_clear()
