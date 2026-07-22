@@ -20,10 +20,10 @@ class HolidayRepository:
 
     async def create(self, holiday: Holiday) -> Holiday:
         self.session.add(holiday)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(holiday)
         return holiday
 
     async def delete(self, holiday: Holiday) -> None:
         await self.session.delete(holiday)
-        await self.session.commit()
+        await self.session.flush()

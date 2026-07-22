@@ -72,25 +72,25 @@ class ReservationRepository:
 
     async def create(self, reservation: Reservation) -> Reservation:
         self.session.add(reservation)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(reservation)
         return reservation
 
     async def update(self, reservation: Reservation) -> Reservation:
         self.session.add(reservation)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(reservation)
         return reservation
 
     async def delete(self, reservation: Reservation) -> None:
         await self.session.delete(reservation)
-        await self.session.commit()
+        await self.session.flush()
 
     async def bulk_create(self, reservations: list[Reservation]) -> None:
         self.session.add_all(reservations)
-        await self.session.commit()
+        await self.session.flush()
 
     async def bulk_delete(self, reservation_ids: list[int]) -> None:
         stmt = delete(Reservation).where(Reservation.id.in_(reservation_ids))
         await self.session.execute(stmt)
-        await self.session.commit()
+        await self.session.flush()

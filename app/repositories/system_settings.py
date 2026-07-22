@@ -15,16 +15,16 @@ class SystemSettingsRepository:
 
     async def create(self, system_settings: SystemSettings) -> SystemSettings:
         self.session.add(system_settings)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(system_settings)
         return system_settings
 
     async def update(self, system_settings: SystemSettings) -> SystemSettings:
         self.session.add(system_settings)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(system_settings)
         return system_settings
 
     async def delete(self, system_settings: SystemSettings) -> None:
         await self.session.delete(system_settings)
-        await self.session.commit()
+        await self.session.flush()
