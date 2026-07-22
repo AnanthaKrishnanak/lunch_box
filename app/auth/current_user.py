@@ -23,10 +23,6 @@ async def get_current_slack_user(
     profile = slack_user["user"]["profile"]
     email = profile.get("email")
 
-    existing_user = await user_service.get_by_slack_user_id(slack_user_id)
-    if existing_user:
-        return existing_user
-
     return await user_service.create(
         UserCreate(
             slack_user_id=slack_user_id,
