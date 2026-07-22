@@ -21,8 +21,7 @@ def upgrade() -> None:
     """Upgrade schema."""
     # Keep the best row per (user, date): CONFIRMED > PENDING > CANCELLED,
     # then earliest created_at, then lowest id.
-    op.execute(
-        """
+    op.execute("""
         DELETE FROM reservations
         WHERE id IN (
             SELECT id
@@ -45,8 +44,7 @@ def upgrade() -> None:
             ) ranked
             WHERE rn > 1
         )
-        """
-    )
+        """)
     op.create_unique_constraint(
         "uq_reservation_user_date",
         "reservations",
