@@ -2,7 +2,7 @@ from datetime import date
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, ForeignKey
+from sqlalchemy import Date, ForeignKey, UniqueConstraint
 from sqlalchemy import (
     Enum as SQLEnum,
 )
@@ -22,6 +22,13 @@ class ReservationStatus(Enum):
 
 class Reservation(Base, TimestampMixin):
     __tablename__ = "reservations"
+    __table_args__ = (
+        UniqueConstraint(
+            "slack_user_id",
+            "reservation_date",
+            name="uq_reservation_user_date",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     reservation_date: Mapped[date] = mapped_column(
