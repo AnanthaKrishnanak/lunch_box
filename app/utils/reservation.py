@@ -49,33 +49,37 @@ def get_next_reservation_dates_for_a_week(
     system_settings: SystemSettings,
     holidays: list[Holiday],
 ) -> list[date]:
-    """Return the remaining working days for the current or next week."""
+    """Return the remaining reservable working days for the current or next week."""
 
     current_datetime = now()
-    current_date = current_datetime.date()
+    today = current_datetime.date()
 
     holiday_dates = {holiday.date for holiday in holidays}
-    #  start next week after the rollover or on weekends.
-    is_after_rollover = (
-        current_datetime.weekday() >= 5
-        or current_datetime.time() >= system_settings.day_rollover_time
+
+    is_weekend = current_datetime.weekday() >= 5
+    has_passed_rollover_time = (
+        current_datetime.time() >= system_settings.day_rollover_time
     )
 
-    if is_after_rollover:
-        days_until_next_monday = 7 - current_date.weekday()
-        start_date = current_date + timedelta(days=days_until_next_monday)
+    if is_weekend:
+        days_until_monday = 7 - today.weekday()
+        first_reservation_date = today + timedelta(days=days_until_monday)
+    elif has_passed_rollover_time:
+        first_reservation_date = today + timedelta(days=1)
     else:
-        start_date = current_date
+        first_reservation_date = today
 
-    end_of_week = start_date + timedelta(days=4 - start_date.weekday())
+    last_reservation_date = first_reservation_date + timedelta(
+        days=4 - first_reservation_date.weekday()
+    )
 
     reservation_dates: list[date] = []
-    current_date = start_date
+    reservation_date = first_reservation_date
 
-    while current_date <= end_of_week:
-        if current_date not in holiday_dates:
-            reservation_dates.append(current_date)
+    while reservation_date <= last_reservation_date:
+        if reservation_date not in holiday_dates:
+            reservation_dates.append(reservation_date)
 
-        current_date += timedelta(days=1)
+        reservation_date += timedelta(days=1)
 
     return reservation_dates
