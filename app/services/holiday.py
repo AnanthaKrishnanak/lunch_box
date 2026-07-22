@@ -23,16 +23,20 @@ class HolidayService:
         return holiday
 
     async def create(self, payload: HolidayBase) -> Holiday:
-        from app.core.cache import get_holidays  # deferred to avoid circular import
+        from app.core.cache import (
+            invalidate_holidays_cache,
+        )  # deferred to avoid circular import
 
         holiday = Holiday(**payload.model_dump())
         await self.repository.create(holiday)
-        get_holidays.cache_clear()
+        invalidate_holidays_cache()
         return holiday
 
     async def delete(self, holiday_id: int) -> None:
-        from app.core.cache import get_holidays  # deferred to avoid circular import
+        from app.core.cache import (
+            invalidate_holidays_cache,
+        )  # deferred to avoid circular import
 
         holiday = await self.get_by_id(holiday_id)
         await self.repository.delete(holiday)
-        get_holidays.cache_clear()
+        invalidate_holidays_cache()
