@@ -34,11 +34,11 @@ def get_next_reservation_date(
     if current_date in holiday_dates:
         return get_next_working_day(current_date, holiday_dates)
 
-    # Before the cutoff time, the reservation is for the current working day.
-    if current_datetime.time() < system_settings.cutoff_time:
+    # Before the day rollover time, the reservation is for the current working day.
+    if current_datetime.time() < system_settings.day_rollover_time:
         return current_date
 
-    # After the cutoff time, move to the next available working day.
+    # After the day rollover time, move to the next available working day.
     return get_next_working_day(
         current_date + timedelta(days=1),
         holiday_dates,

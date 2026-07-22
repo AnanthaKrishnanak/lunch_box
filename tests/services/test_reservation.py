@@ -120,11 +120,11 @@ class TestAddReservation:
         assert created.slack_user_id == "U123"
         repo.claim_cancelled_reservation.assert_not_awaited()
 
-    async def test_after_cutoff_uses_next_working_day(
-        self, service, repo, settings, wednesday_after_cutoff
+    async def test_after_rollover_uses_next_working_day(
+        self, service, repo, settings, wednesday_after_rollover
     ):
         repo.get_reservation_by_date.return_value = None
-        with _patch_clock_and_cache(settings, [], wednesday_after_cutoff):
+        with _patch_clock_and_cache(settings, [], wednesday_after_rollover):
             result = await service.add_reservation("U123")
 
         assert result.message == ("Successfully added the food count for 2026-07-23")

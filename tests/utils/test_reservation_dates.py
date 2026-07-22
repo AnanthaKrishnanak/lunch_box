@@ -33,19 +33,28 @@ class TestGetNextWorkingDay:
 
 
 class TestGetNextReservationDate:
-    def test_before_cutoff_returns_today(self, settings, wednesday_before_cutoff):
+    def test_before_rollover_returns_today(self, settings, wednesday_before_cutoff):
         with patch(
             "app.utils.reservation.now",
             return_value=wednesday_before_cutoff,
         ):
             assert get_next_reservation_date(settings, []) == date(2026, 7, 22)
 
-    def test_after_cutoff_returns_next_working_day(
+    def test_between_cutoff_and_rollover_returns_today(
         self, settings, wednesday_after_cutoff
     ):
         with patch(
             "app.utils.reservation.now",
             return_value=wednesday_after_cutoff,
+        ):
+            assert get_next_reservation_date(settings, []) == date(2026, 7, 22)
+
+    def test_after_rollover_returns_next_working_day(
+        self, settings, wednesday_after_rollover
+    ):
+        with patch(
+            "app.utils.reservation.now",
+            return_value=wednesday_after_rollover,
         ):
             assert get_next_reservation_date(settings, []) == date(2026, 7, 23)
 
@@ -64,9 +73,9 @@ class TestGetNextReservationDate:
                 2026, 7, 23
             )
 
-    def test_friday_after_cutoff_returns_monday(self, settings):
-        friday_after_cutoff = datetime(2026, 7, 24, 11, 0, tzinfo=IST)
-        with patch("app.utils.reservation.now", return_value=friday_after_cutoff):
+    def test_friday_after_rollover_returns_monday(self, settings):
+        friday_after_rollover = datetime(2026, 7, 24, 16, 0, tzinfo=IST)
+        with patch("app.utils.reservation.now", return_value=friday_after_rollover):
             assert get_next_reservation_date(settings, []) == date(2026, 7, 27)
 
 
@@ -84,7 +93,7 @@ class TestGetNextReservationDatesForAWeek:
                 date(2026, 7, 24),
             ]
 
-    def test_after_rollover_returns_next_monday_to_friday(
+    def test_midweek_after_rollover_returns_remaining_days(
         self, settings, wednesday_after_rollover
     ):
         with patch(
