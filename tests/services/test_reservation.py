@@ -1,13 +1,15 @@
 from contextlib import ExitStack, contextmanager
 from datetime import date
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from fastapi import BackgroundTasks
 
 from app.core.exceptions import NotFoundError
 from app.models.reservation import ReservationStatus
 from app.repositories.reservation import ReservationRepository
 from app.services.reservation import ReservationService
+from app.tasks.notify import notify
 from tests.factories import make_reservation
 
 
@@ -17,8 +19,13 @@ def repo():
 
 
 @pytest.fixture
-def service(repo):
-    return ReservationService(repo)
+def background_tasks():
+    return MagicMock(spec=BackgroundTasks)
+
+
+@pytest.fixture
+def service(repo, background_tasks):
+    return ReservationService(repo, background_tasks)
 
 
 @contextmanager
@@ -281,7 +288,12 @@ class TestCancelReservation:
         repo.delete.assert_awaited_once_with(reservation)
 
     async def test_same_day_window_confirmed_promote_true_deletes(
-        self, service, repo, settings, wednesday_in_waiting_list_window
+        self,
+        service,
+        repo,
+        background_tasks,
+        settings,
+        wednesday_in_waiting_list_window,
     ):
         reservation = make_reservation(
             reservation_date=date(2026, 7, 22),
@@ -308,6 +320,11 @@ class TestCancelReservation:
         assert pending.status == ReservationStatus.CONFIRMED
         repo.update.assert_awaited_once_with(pending)
         repo.delete.assert_awaited_once_with(reservation)
+        background_tasks.add_task.assert_called_once_with(
+            notify,
+            "Your reservation is confirmed for today's lunch",
+            "U999",
+        )
 
     async def test_same_day_window_confirmed_promote_false_cancels(
         self, service, repo, settings, wednesday_in_waiting_list_window
@@ -377,13 +394,15 @@ class TestCancelReservationsForWeek:
 
 
 class TestPromotePendingReservations:
-    async def test_no_pending_returns_false(self, service, repo):
+    async def test_no_pending_returns_false(self, service, repo, background_tasks):
         repo.get_pending_reservation_for_promotion.return_value = None
         assert (await service.promote_pending_reservations(date(2026, 7, 22))) is False
         repo.update.assert_not_awaited()
+        background_tasks.add_task.assert_not_called()
 
-    async def test_pending_promoted_to_confirmed(self, service, repo):
+    async def test_pending_promoted_to_confirmed(self, service, repo, background_tasks):
         pending = make_reservation(
+            slack_user_id="U999",
             reservation_date=date(2026, 7, 22),
             status=ReservationStatus.PENDING,
         )
@@ -392,3 +411,8 @@ class TestPromotePendingReservations:
         assert (await service.promote_pending_reservations(date(2026, 7, 22))) is True
         assert pending.status == ReservationStatus.CONFIRMED
         repo.update.assert_awaited_once_with(pending)
+        background_tasks.add_task.assert_called_once_with(
+            notify,
+            "Your reservation is confirmed for today's lunch",
+            "U999",
+        )
